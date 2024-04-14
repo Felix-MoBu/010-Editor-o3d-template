@@ -1,0 +1,189 @@
+//------------------------------------------------
+//--- 010 Editor v11.0.1 Binary Template
+//
+//      File: O3D.bt
+//   Authors: Jakob Klein
+//   Version: 0.1
+//   Purpose: Read OMSI (Omnibus Simulator) Models.
+//  Category: Game
+// File Mask: *.o3d
+//  ID Bytes: 84 19
+//   History: 
+//   0.1   2021-06-19 Jakob Klein: Initial write-up for reading .o3d binary 3d model files for OMSI 2 (Omnibus Simulator). So far only educated guesses without any documentation.
+//   0.2   2024-04-13 Felix MoBu: Renamed components and added weightpaint area and some comments
+//------------------------------------------------
+
+typedef struct {
+    ushort magic;
+    byte version;
+    
+    switch (version)
+    {
+        case 1:
+            break;
+        case 5:
+        case 7:
+            byte _;
+            uint _;
+            break;
+    }
+} header_def;
+
+typedef enum <byte> {
+    ct_VERTDEF = 0x17,      // vertex area tag
+    ct_TRIDEF = 0x49,       // triangle area tag
+    ct_MATDEF = 0x26,       // material area tag
+    ct_MATRIX = 0x79,       // matrix area tag
+    ct_WEIGHTPAINT = 0x54   // weight paint area tag
+} chunktype;
+
+typedef struct {
+    float diff_R;          // diffuse color
+    float diff_G;
+    float diff_B;
+    float diff_Alpha;
+    float spec_R;          // specular color
+    float spec_G;
+    float spec_B;
+    float emiss_R;         // emissive color
+    float emiss_G;
+    float emiss_B;
+    float power;           // power of the texture
+    byte len;              // byte length of texture name
+    if (len == 0) {
+        Warning( "There is a texture file name with lengh 0 in this file!" );
+    }
+    char name[len];        // texture name
+} material_def;
+
+typedef struct {
+    float X;               // x
+    float Y;               // y
+    float Z;               // z
+    float nX;              // nx
+    float nY;              // ny
+    float nZ;              // nz
+    float U;               // u
+    float V;               // v
+} vertices_def;
+
+typedef struct {
+    ushort idx0;            // vertex 0
+    ushort idx1;            // vertex 1
+    ushort idx2;            // vertex 2
+    ushort mat_id;          // material index
+} triangles_def;
+
+typedef struct {
+    float a_X;              // values for direction in matrix 4x4
+    float a_Y;
+    float a_Z;
+    float a_scale;
+    float b_X;
+    float b_Y;
+    float b_Z;
+    float b_Scale;
+    float c_X;
+    float c_Y;
+    float c_Z;
+    float c_scale;
+    float center_X;         // center of the object
+    float center_Y;
+    float center_Z;
+    float center_scale;
+} matrix_def;
+
+typedef struct {
+    ushort idx;             // vertex index
+    float weight;           // scale 0 to 1
+} weight;
+
+typedef struct {
+    byte len;               // byte length of weight paint name
+    char name[len];         // weight paint name
+    ushort count;           // count of weight assignment
+    weight v[count];        // list of weight assignment
+} weightpaint_def;
+
+
+
+// Define the file
+LittleEndian(); 
+header_def header;
+
+// Check for header
+if( header.magic != 0x1984 )
+{
+    Warning( "File is not of known OMSI Format. " +
+             "Template stopped." );
+    return -1;
+}
+
+
+local byte tag;
+while( !FEof() )
+{
+    tag = ReadByte(FTell());
+    chunktype btag;
+    if (tag == 0x17)        // vertex area
+    {
+        switch (header.version)
+        {
+            case 1:
+                ushort num;
+                break;
+            case 5:
+            case 7:
+                uint num;
+                break;
+            default:
+                return -1;
+        }
+        vertices_def vertices[num];
+    }
+
+
+    if (tag == 0x49)        // triange area
+    {
+        switch (header.version)
+        {
+            case 1:
+                ushort num;
+                break;
+            case 5:
+            case 7:
+                uint num;
+                break;
+            default:
+                return -1;
+        }
+        triangles_def triangles[num];
+    }
+
+
+    if (tag == 0x26)        // material area
+    {        
+        ushort num;
+        local int i;
+        for (i=0; i<num; i++)
+        {
+            material_def material;
+        }
+    }
+
+
+    if (tag == 0x79)        // matrix area
+    {
+        matrix_def matrix;
+    }
+    
+    
+    if (tag == 0x54)        // weight paint area
+    {
+        ushort num;
+        for (i=0; i<num; i++)
+        {
+            weightpaint_def weightpaint;
+        } 
+    }
+}
